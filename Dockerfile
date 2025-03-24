@@ -1,13 +1,22 @@
 FROM python:3.12-slim
+RUN groupadd -r groupadmin && useradd -r -g groupadmin admin
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+RUN pip install --upgrade pip
+
 WORKDIR /bookshop
 
-COPY . .
+COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-RUN python src/manage.py migrate
+COPY . .
 
-RUN python src/manage.py collectstatic
+RUN chmod -R 777 *
 
 EXPOSE 8000
 
-CMD ["python", "src/manage.py", "runserver", "0.0.0.0:8000"]
+WORKDIR /bookshop/src
+
+USER admin

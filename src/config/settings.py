@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 from datetime import timedelta
 from pathlib import Path
+
+from django.conf.global_settings import EMAIL_BACKEND
 from dotenv import load_dotenv
 from os import getenv
 
@@ -84,18 +86,18 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': getenv('POSTGRES_NAME'),
-        'USER': getenv('POSTGRES_USER'),
-        'PASSWORD': getenv('POSTGRES_PASSWORD'),
-        'HOST': getenv('POSTGRES_HOST'),
-        'PORT': getenv('POSTGRES_PORT'),
+        'NAME': getenv('POSTGRES_DB', 'db1'),
+        'USER': getenv('POSTGRES_USER', 'admin'),
+        'PASSWORD': getenv('POSTGRES_PASSWORD', '1234'),
+        'HOST': getenv('POSTGRES_HOST', 'localhost'),
+        'PORT': getenv('POSTGRES_PORT', '5432'),
     }
 }
 
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379',
+        'LOCATION': f'redis://{getenv("REDIS_HOST", "127.0.0.1")}:6379/0',
     }
 }
 
@@ -204,7 +206,10 @@ SIMPLE_JWT = {
 
 # EMAIL BACKEND
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+if not getenv('EMAIL_HOST_USER'):
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -215,14 +220,14 @@ EMAIL_HOST_PASSWORD = getenv('EMAIL_HOST_PASSWORD')
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 SERVER_EMAIL = EMAIL_HOST_USER
-EMAIL_ADMIN = 'losofst@gmail.com'
+EMAIL_ADMIN = getenv('EMAIL_HOST_USER')
 
 
 # CELERY
 CELERY_TIMEZONE = "Europe/Moscow"
-CELERY_BROKER_URL = 'redis://localhost:6379/1'
+CELERY_BROKER_URL = f'redis://{getenv("REDIS_HOST", "127.0.0.1")}:6379/1'
 CELERY_BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/1'
+CELERY_RESULT_BACKEND = f'redis://{getenv("REDIS_HOST", "127.0.0.1")}:6379/1'
 CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
